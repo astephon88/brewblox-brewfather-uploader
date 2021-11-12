@@ -27,7 +27,7 @@ mkdir ~/brewblox/brewfather-uploader
 ```
 The `brewfather-url` argument is the url provided by brewfather when enabling a [custom stream](https://docs.brewfather.app/integrations/custom-stream).
 
-Create the `~/brewblox/brewfather-uploader/ermenter_config.yml' file which will contain the mapping from Brewblox sensor to Brewfather field. The following is an example.
+Create the `~/brewblox/brewfather-uploader/fermenter_config.yml' file which will contain the mapping from Brewblox sensor to Brewfather field. The following is an example.
 
 ```yaml
 - name: "Fermenter 1"
