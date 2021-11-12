@@ -1,14 +1,15 @@
 [tool.poetry]
-name = "YOUR-PACKAGE"
+name = "brewblox_brewfather_uploader"
 version = "0.1.0"
-description = "ADD DESCRIPTION HERE"
-authors = ["Code Fairies Inc <noreply@santa.com>"]
+description = "Brewblox service for uploading temperature and gravity information to Brewfather"
+authors = ["Andrew Stephon <andrew@stephon.dev>"]
 license = "GPL-3.0"
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = ">=3.9,<4"
+python = ">=3.7,<4"
 brewblox-service = "^0.33.0"
+pyyaml = ">=6.0"
 
 [tool.poetry.dev-dependencies]
 pytest-flake8 = "^1.0.7"

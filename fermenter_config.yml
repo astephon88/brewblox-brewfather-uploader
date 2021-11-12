@@ -1,0 +1,28 @@
+- name: "Fermenter 1"
+  temp_unit: "F"
+  gravity_unit: "G"
+  sensors:
+    temp:
+      service_type: "spark"
+      service: "spark-one"
+      sensor: "Fermenter 1 Beer Sensor"
+    gravity:
+      service_type: "tilt"
+      tilt_params:
+        calibrated: True
+      service: "tilt"
+      sensor: "Blue"
+- name: "Fermenter 2"
+  temp_unit: "F"
+  gravity_unit: "G"
+  sensors:
+    temp:
+      service_type: "spark-one"
+      service: "cold-side"
+      sensor: "Fermenter 2 Beer Sensor"
+    gravity:
+      service_type: "tilt"
+      tilt_params:
+        calibrated: True
+      service: "tilt"
+      sensor: "Orange"

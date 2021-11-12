@@ -4,14 +4,14 @@ Example of how to import and use the brewblox service
 
 from argparse import ArgumentParser
 
-from brewblox_service import brewblox_logger, http, mqtt, scheduler, service
+from brewblox_service import brewblox_logger, http, scheduler, service
 
-from YOUR_PACKAGE import http_example, publish_example, subscribe_example
+from brewblox_brewfather_uploader import brewfather_uploader
 
 LOGGER = brewblox_logger(__name__)
 
 
-def create_parser(default_name='YOUR_PACKAGE') -> ArgumentParser:
+def create_parser(default_name='brewblox_brewfather_uploader') -> ArgumentParser:
     # brewblox-service has some default arguments
     # We can add more arguments here before sending the parser back to brewblox-service
     # The parsed values for all arguments are placed in app['config']
@@ -20,10 +20,30 @@ def create_parser(default_name='YOUR_PACKAGE') -> ArgumentParser:
 
     # This will be used by publish_example
     # Note how we specify the type as float
+
+    parser.add_argument('--history-host',
+                        help='Hostname at which the history service can be reached [%(default)s]',
+                        default='http://history',
+                        type=str)
+    parser.add_argument('--history-port',
+                        help='Port at which the history service can be reached [%(default)s]',
+                        type=int,
+                        default=5000)
+
     parser.add_argument('--poll-interval',
                         help='Interval (in seconds) between polling. [%(default)s]',
                         type=float,
-                        default=5)
+                        default=900)
+
+    parser.add_argument('--brewfather-url',
+                        help='Brewfather URL to submit custom stream data to',
+                        type=str,
+                        required=True)
+
+    parser.add_argument('--fermenter-config-file',
+                        help='Location of the fermenter config file. [%(defaults)s]',
+                        type=str,
+                        default='/config/fermenter_config.yml')
 
     return parser
 
@@ -37,10 +57,6 @@ def main():
     # and for the RepeaterFeature used in poll_example
     scheduler.setup(app)
 
-    # Enable event handling
-    # Event subscription / publishing will be enabled after you call this function
-    mqtt.setup(app)
-
     # Enable making HTTP requests
     # This allows you to access a shared aiohttp ClientSession
     # https://docs.aiohttp.org/en/stable/client_reference.html
@@ -49,9 +65,7 @@ def main():
     # To keep everything consistent, examples also have the setup() function
     # In setup() they register everything that must be done before the service starts
     # It's not required to use this pattern, but it makes code easier to understand
-    subscribe_example.setup(app)
-    publish_example.setup(app)
-    http_example.setup(app)
+    brewfather_uploader.setup(app)
 
     # Add all default endpoints, and adds prefix to all endpoints
     #
@@ -69,7 +83,7 @@ def main():
     service.furnish(app)
 
     # service.run() will start serving clients async
-    service.run(app)
+    service.run(app, False)
 
 
 if __name__ == '__main__':
