@@ -2,7 +2,7 @@
 name = "brewblox_brewfather_uploader"
 version = "0.1.0"
 description = "Brewblox service for uploading temperature and gravity information to Brewfather"
-authors = ["Andrew Stephon <andrew@stephon.dev>"]
+authors = ["astephon88 <astephon88@gmail.com>"]
 license = "GPL-3.0"
 readme = "README.md"
 
