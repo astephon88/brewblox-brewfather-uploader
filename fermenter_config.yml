@@ -17,8 +17,8 @@
   gravity_unit: "G"
   sensors:
     temp:
-      service_type: "spark-one"
-      service: "cold-side"
+      service_type: "spark"
+      service: "spark-one"
       sensor: "Fermenter 2 Beer Sensor"
     gravity:
       service_type: "tilt"
