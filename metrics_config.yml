@@ -1,0 +1,27 @@
+settings:
+  temp_unit: "F"
+  gravity_unit: "G"
+  brewfather_url: "http://log.brewfather.net/stream?id=XXXXXXXXXXXXXX"
+fermentations:
+  - name: "Fermenter 1"
+    sensors:
+      temp:
+        service_type: "spark"
+        service: "spark-one"
+        sensor: "Fermenter 1 Beer Sensor"
+      gravity:
+        service_type: "tilt"
+        calibrated: True
+        service: "tilt"
+        sensor: "Blue"
+  - name: "Fermenter 2"
+    sensors:
+      temp:
+        service_type: "spark"
+        service: "spark-one"
+        sensor: "Fermenter 2 Beer Sensor"
+      gravity:
+        service_type: "tilt"
+        calibrated: True
+        service: "tilt"
+        sensor: "Orange"
