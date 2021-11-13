@@ -4,4 +4,3 @@ services:
     image: astephon88/brewblox-brewfather-uploader:develop
     restart: unless-stopped
     volumes: ['./brewfather-uploader:/config']
-    command: --brewfather-url=http://log.brewfather.net/stream?id=XXXXXXXXXXXXXX
