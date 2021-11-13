@@ -35,15 +35,10 @@ def create_parser(default_name='brewblox_brewfather_uploader') -> ArgumentParser
                         type=float,
                         default=900)
 
-    parser.add_argument('--brewfather-url',
-                        help='Brewfather URL to submit custom stream data to',
+    parser.add_argument('--metrics-config-file',
+                        help='Location of the metrics configuration file. [%(defaults)s]',
                         type=str,
-                        required=True)
-
-    parser.add_argument('--fermenter-config-file',
-                        help='Location of the fermenter config file. [%(defaults)s]',
-                        type=str,
-                        default='/config/fermenter_config.yml')
+                        default='/config/metrics_config.yml')
 
     return parser
 

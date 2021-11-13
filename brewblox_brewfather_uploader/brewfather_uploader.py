@@ -3,7 +3,6 @@ Example on how to set up a feature that polls data, and publishes to the eventbu
 """
 
 import asyncio
-from typing import Any, Dict, List
 
 from aiohttp import web, ClientResponseError
 from brewblox_service import brewblox_logger, features, http, repeater
@@ -18,6 +17,39 @@ class PublishingFeature(repeater.RepeaterFeature):
     - every X seconds, do Y, until the service shuts down
     """
 
+    def derive_metric(self, brewfather_field, sensor_config):
+
+        gravity_unit_string = 'Specific gravity' if self.gravity_unit == 'G' else 'Plato[degP]'
+
+        temp_metrics = {
+                        'tilt': {
+                            True: f'Calibrated temperature[deg{self.temp_unit}]',
+                            False: f'Temperature[deg{self.temp_unit}]'
+                         },
+                        'spark': {
+                            True: f'value[deg{self.temp_unit}]'
+                        }
+        }
+
+        metric_matrix = {
+            'temp': temp_metrics,
+            'aux_temp': temp_metrics,
+            'ext_temp': temp_metrics,
+            'gravity': {
+                'tilt': {
+                    True: f'Calibrated {gravity_unit_string[0].lower()+gravity_unit_string[1:]}',
+                    False: f'{gravity_unit_string}'
+                }
+            }
+        }
+        metric_suffix_str = metric_matrix \
+            .get(brewfather_field, {}) \
+            .get(sensor_config['service_type'], {}) \
+            .get(sensor_config.get('calibrated', True), None)
+
+        return f'{sensor_config["service"]}/{sensor_config["sensor"]}/' \
+            + metric_suffix_str if metric_suffix_str else None
+
     async def prepare(self):
         """
         This function must be implemented by child classes of RepeaterFeature.
@@ -26,92 +58,40 @@ class PublishingFeature(repeater.RepeaterFeature):
         LOGGER.info(f'Starting {self}')
 
         # Get values from config
-        config_file = self.app['config']['fermenter_config_file']
         history_host = self.app['config']['history_host']
         history_port = self.app['config']['history_port']
+        self.metrics_url = f'{history_host}:{history_port}/history/timeseries/metrics'
+
         self.name = self.app['config']['name']
         self.interval = max(900.0, self.app['config']['poll_interval'])
 
-        self.metrics_url = f'{history_host}:{history_port}/history/timeseries/metrics'
-        self.brewfather_url = self.app['config']['brewfather_url']
-
-        # get fermenter configuration from config file and map brewblox metrics to brewfather fields.
-        # this is ugly, and there's got to be a better way
+        config_filename = self.app['config']['metrics_config_file']
         try:
-            yamlfile = open(config_file)
-            fermenter_config: List[Dict[str, Any]] = safe_load(yamlfile)
+            # load the config file
+            with open(config_filename) as yamlfile:
+                config_file = safe_load(yamlfile)
 
-            self.field_mapping: Dict[str, Dict[str, Dict[str, str]]] = {}
+            # extract the global settings
+            self.brewfather_url = config_file['settings']['brewfather_url']
+            # todo: get this from the datastore
+            self.temp_unit = config_file['settings'].get('temp_unit', 'C')
+            # todo: get this from the datastore once implemented
+            self.gravity_unit = config_file['settings'].get('gravity_unit', 'G')
+
+            self.field_mapping = dict()
 
             # loop through each fermenter in the config file
-            for fermenter in fermenter_config:
+            for fermenter in config_file['fermentations']:
                 # extract the fermenter name and fields from the config file
-                fermenter_name: str = fermenter['name']
-                # extract the measurement units if they are available
-                temp_unit: str = fermenter.get('temp_unit', 'F')
-                gravity_unit: str = fermenter.get('gravity_unit', 'G')
-                fermenter_sensors: Dict[str, Dict[str, Any]] = fermenter['sensors']
 
-                # initialize the optinal brewfather fields to None so we can exclude them later if they aren't used
-                temp_metric: str = None
-                gravity_metric: str = None
-
-                # loop through each sensor config
-                for brewfather_field, sensor_config in fermenter_sensors.items():
-                    # extract the common sensor config values
-                    service_type: str = sensor_config['service_type']
-                    service_name: str = sensor_config['service']
-                    sensor: str = sensor_config['sensor']
-
-                    # derive the brewlox temp metric based on the sensor configuration
-                    if brewfather_field == 'temp':
-
-                        if service_type == 'tilt':
-                            if sensor_config.get('tilt_params', {}).get('calibrated', False):
-                                temp_metric = f'{service_name}/{sensor}/Calibrated temperature[deg{temp_unit}]'
-                            else:
-                                temp_metric = f'{service_name}/{sensor}/Temperature[deg{temp_unit}]'
-                        elif service_type == 'spark':
-                            temp_metric = f'{service_name}/{sensor}/value[deg{temp_unit}]'
-
-                        # todo: elif other temp sensor services
-
-                    # derive the brewblox gravity metric based on the sensor configuration
-                    elif brewfather_field == 'gravity':
-
-                        if service_type == 'tilt':
-                            unit_string = 'Specific gravity' if gravity_unit == 'G' else 'Plato[degP]'
-                            if sensor_config.get('tilt_params', {}).get('calibrated', False):
-                                gravity_metric = f'{service_name}/{sensor}/Calibrated {unit_string.lower()}'
-                            else:
-                                gravity_metric = f'{service_name}/{sensor}/{unit_string}'
-
-                        # todo: elif other gravity sensor services. i.e. plaato
-                    # todo: elif other brewfather fields. i.e. aux_temp, ext_temp, bpm, pressure
-
-                # create a mapping from brewfather field to brewblox metric
-                self.field_mapping[fermenter_name] = {
-                    'metrics': {
-                        'temp':  temp_metric,
-                        'gravity': gravity_metric
-                    },
-                    'units': {
-                        'temp_unit': temp_unit,
-                        'gravity_unit': gravity_unit
-                    }
-
-                    # todo: add aux_temp, ext_temp, bpm, and pressure
+                self.field_mapping[fermenter['name']] = {
+                    brewfather_field: self.derive_metric(brewfather_field, sensor_config)
+                    for brewfather_field, sensor_config in fermenter['sensors'].items()
                 }
 
         except Exception as e:
-            LOGGER.error('Error loading fermenter configuration file: %s', config_file, exc_info=True)
+            LOGGER.error('Error loading fermenter configuration file: %s', config_filename, exc_info=True)
             raise repeater.RepeaterCancelled from e
-
-        # You can prematurely exit here.
-        # Raise RepeaterCancelled(), and the base class will stop without a fuss.
-        # run() will not be called.
-        if self.interval <= 0:
-            raise repeater.RepeaterCancelled()
 
     async def run(self):
         """
@@ -124,28 +104,27 @@ class PublishingFeature(repeater.RepeaterFeature):
         session = http.session(self.app)
 
         for fermenter_name, fields in self.field_mapping.items():
-            metrics = fields['metrics']
             brewblox_params = {
                 'fields': list
                 (
                     {
                         metric
-                        for metric in metrics.values()
+                        for metric in fields.values()
                         if metric is not None
                     }
                 )
             }
-
-            response = await session.post(self.metrics_url, json=brewblox_params)
-
+            LOGGER.debug('Submitted brewblox fields: %s', brewblox_params)
             try:
-                bfdata = {}
-                for response_value in await response.json():
-                    brewblox_field = response_value['metric']
-                    if fields['metrics']['temp'] == brewblox_field:
-                        bfdata['temp'] = response_value['value']
-                    elif fields['metrics']['gravity'] == brewblox_field:
-                        bfdata['gravity'] = response_value['value']
+                response = await session.post(self.metrics_url, json=brewblox_params)
+                response_values = await response.json()
+                LOGGER.debug('Returned brewblox metrics: %s', response_values)
+                bfdata = {
+                    brewfather_field: response_value['value']
+                    for brewfather_field in ['temp', 'gravity', 'aux_temp', 'ext_temp']
+                    for response_value in response_values
+                    if fields.get(brewfather_field, None) == response_value['metric']
+                }
 
             except ClientResponseError:
                 LOGGER.error(
@@ -155,16 +134,17 @@ class PublishingFeature(repeater.RepeaterFeature):
 
             # add name and temp units
             bfdata['name'] = fermenter_name
-            bfdata['temp_unit'] = fields['units']['temp_unit']
-            bfdata['gravity_unit'] = fields['units']['gravity_unit']
+            bfdata['temp_unit'] = self.temp_unit
+            bfdata['gravity_unit'] = self.gravity_unit
 
-            # clear out any empty fields
+            # clear out any empty fields. todo: This probably isn't actually necessary
             brewfather_params = {
                 k: v
                 for k, v in bfdata.items()
                 if v is not None
             }
 
+            LOGGER.debug('Submitted brewfather fields: %s', brewfather_params)
             try:
                 bf_response = await session.post(self.brewfather_url, json=brewfather_params)
 
@@ -172,7 +152,8 @@ class PublishingFeature(repeater.RepeaterFeature):
                 result = (await bf_response.json(content_type=None))['result']
                 if result == 'success':
                     LOGGER.info('Data submitted successfully')
-                elif result == 'ignored':
+                # for some reason, the result is 'OK' now instead of 'ignored' beacause...reasons?
+                elif result == 'OK' or result == 'ignored':
                     LOGGER.warning('Data submission ignored. (Leave at least 900 seconds between logging)')
                 else:
                     LOGGER.warning('%s', await bf_response.text())
