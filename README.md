@@ -68,6 +68,6 @@ brewblox-ctl up
 
 ## Limitations
 
-The service currently only supports the `temp` and `gravity` fields from the Brewfather custom stream data structure. `aux_temp`, `ext_temp`, and `bpm` could easily be added. The other measurements do not have any sensors currently available in Brewblox to generate them.
+The service currently only supports the `temp`, `aux_temp`, `ext_temp` and `gravity` fields from the Brewfather custom stream data structure.
 
-The `temp` metric is currently only supported by Spark and Tilt temperature sensors. The `gravity` metric is only supported for Tilt. The service will eventually be expanded to support Plaato airlocks.
+The `temp`, `aux_temp`, and `ext_temp` metrics are currently supported by Spark and Tilt temperature sensors. The `gravity` metric is only supported for Tilt. Sometime in the future, the Plaato airlock should also be added to the service, at which point `bpm` will likely also be supported

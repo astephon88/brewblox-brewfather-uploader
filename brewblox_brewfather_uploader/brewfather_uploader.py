@@ -21,17 +21,20 @@ class PublishingFeature(repeater.RepeaterFeature):
 
         gravity_unit_string = 'Specific gravity' if self.gravity_unit == 'G' else 'Plato[degP]'
 
-        metric_matrix = {
-            'temp': {
-                'tilt': {
-                    True: f'Calibrated temperature[deg{self.temp_unit}]',
-                    False: f'Temperature[deg{self.temp_unit}]'
-                },
-                'spark': {
-                    True: f'value[deg{self.temp_unit}]'
-                }
-            },
+        temp_metrics = {
+                        'tilt': {
+                            True: f'Calibrated temperature[deg{self.temp_unit}]',
+                            False: f'Temperature[deg{self.temp_unit}]'
+                         },
+                        'spark': {
+                            True: f'value[deg{self.temp_unit}]'
+                        }
+        }
 
+        metric_matrix = {
+            'temp': temp_metrics,
+            'aux_temp': temp_metrics,
+            'ext_temp': temp_metrics,
             'gravity': {
                 'tilt': {
                     True: f'Calibrated {gravity_unit_string[0].lower()+gravity_unit_string[1:]}',
@@ -118,7 +121,7 @@ class PublishingFeature(repeater.RepeaterFeature):
                 LOGGER.debug('Returned brewblox metrics: %s', response_values)
                 bfdata = {
                     brewfather_field: response_value['value']
-                    for brewfather_field in ['temp', 'gravity']
+                    for brewfather_field in ['temp', 'gravity', 'aux_temp', 'ext_temp']
                     for response_value in response_values
                     if fields.get(brewfather_field, None) == response_value['metric']
                 }
@@ -149,8 +152,8 @@ class PublishingFeature(repeater.RepeaterFeature):
                 result = (await bf_response.json(content_type=None))['result']
                 if result == 'success':
                     LOGGER.info('Data submitted successfully')
-                # for some reason, the result is 'ok' now instead of 'ignored' beacause...reasons?
-                elif result == 'ok' or result == 'ignored':
+                # for some reason, the result is 'OK' now instead of 'ignored' beacause...reasons?
+                elif result == 'OK' or result == 'ignored':
                     LOGGER.warning('Data submission ignored. (Leave at least 900 seconds between logging)')
                 else:
                     LOGGER.warning('%s', await bf_response.text())
