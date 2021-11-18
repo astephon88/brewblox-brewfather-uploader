@@ -19,12 +19,12 @@ class PublishingFeature(repeater.RepeaterFeature):
 
     def derive_metric(self, brewfather_field, sensor_config):
 
-        gravity_unit_string = 'Specific gravity' if self.gravity_unit == 'G' else 'Plato[degP]'
+        gravity_unit_string = 'specificGravity' if self.gravity_unit == 'G' else 'Plato[degP]'
 
         temp_metrics = {
                         'tilt': {
-                            True: f'Calibrated temperature[deg{self.temp_unit}]',
-                            False: f'Temperature[deg{self.temp_unit}]'
+                            True: f'uncalibratedTemperature[deg{self.temp_unit}]',
+                            False: f'temperature[deg{self.temp_unit}]'
                          },
                         'spark': {
                             True: f'value[deg{self.temp_unit}]'
@@ -37,7 +37,7 @@ class PublishingFeature(repeater.RepeaterFeature):
             'ext_temp': temp_metrics,
             'gravity': {
                 'tilt': {
-                    True: f'Calibrated {gravity_unit_string[0].lower()+gravity_unit_string[1:]}',
+                    True: f'uncalibrated{gravity_unit_string[0].upper()+gravity_unit_string[1:]}',
                     False: f'{gravity_unit_string}'
                 }
             }
@@ -45,7 +45,7 @@ class PublishingFeature(repeater.RepeaterFeature):
         metric_suffix_str = metric_matrix \
             .get(brewfather_field, {}) \
             .get(sensor_config['service_type'], {}) \
-            .get(sensor_config.get('calibrated', True), None)
+            .get(sensor_config.get('uncalibrated', False), None)
 
         return f'{sensor_config["service"]}/{sensor_config["sensor"]}/' \
             + metric_suffix_str if metric_suffix_str else None
