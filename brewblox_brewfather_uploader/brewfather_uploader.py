@@ -27,7 +27,7 @@ class PublishingFeature(repeater.RepeaterFeature):
                             False: f'temperature[deg{self.temp_unit}]'
                          },
                         'spark': {
-                            True: f'value[deg{self.temp_unit}]'
+                            False: f'value[deg{self.temp_unit}]'
                         }
         }
 
