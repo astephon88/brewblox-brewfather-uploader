@@ -20,7 +20,7 @@ mkdir ~/brewblox/brewfather-uploader
 
 ```yaml
   brewfather-uploader:
-    image: astephon88/brewblox-brewfather-uploader:develop
+    image: astephon88/brewblox-brewfather-uploader:${BREWBLOX_RELEASE}
     restart: unless-stopped
     volumes: ['./brewfather-uploader:/config']
 ```
