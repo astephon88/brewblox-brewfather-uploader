@@ -11,7 +11,7 @@ fermentations:
         sensor: "Fermenter 1 Beer Sensor"
       gravity:
         service_type: "tilt"
-        calibrated: True
+        uncalibrated: True
         service: "tilt"
         sensor: "Blue"
   - name: "Fermenter 2"
@@ -22,6 +22,5 @@ fermentations:
         sensor: "Fermenter 2 Beer Sensor"
       gravity:
         service_type: "tilt"
-        calibrated: True
         service: "tilt"
         sensor: "Orange"
