@@ -6,7 +6,7 @@ authors = ["astephon88 <astephon88@gmail.com>"]
 license = "GPL-3.0"
 readme = "README.md"
 
-[poetry.dev.dependencies]
+[poetry.group.dev.dependencies]
 python = ">=3.7,<4"
 brewblox-service = "^0.33.0"
 pyyaml = ">=6.0"
