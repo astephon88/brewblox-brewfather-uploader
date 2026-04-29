@@ -41,6 +41,7 @@ steps:
 
 - bash: |
     pip install poetry
+    pip install poetry-plugin-export
     poetry install
   displayName: Install dependencies
 
