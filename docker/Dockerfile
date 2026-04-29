@@ -12,7 +12,7 @@ RUN set -ex \
     && pip3 wheel --wheel-dir=/wheeley -r /app/requirements.txt \
     && pip3 wheel --wheel-dir=/wheeley /app/dist/*
 
-FROM python:3.9-slim-buster
+FROM python:3.11-slim-bookworm
 EXPOSE 5000
 WORKDIR /app
 
